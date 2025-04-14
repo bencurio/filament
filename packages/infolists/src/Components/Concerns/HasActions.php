@@ -4,6 +4,7 @@ namespace Filament\Infolists\Components\Concerns;
 
 use Closure;
 use Filament\Infolists\Components\Actions\Action;
+use Filament\Infolists\Components\Actions\ActionGroup;
 use Filament\Infolists\Components\Contracts\HasAffixActions;
 use Filament\Infolists\Components\Contracts\HasFooterActions;
 use Filament\Infolists\Components\Contracts\HasHeaderActions;
@@ -117,17 +118,27 @@ trait HasActions
         }
 
         if ($this instanceof HasFooterActions) {
-            $this->cachedActions = [
-                ...$this->cachedActions,
-                ...$this->getFooterActions(),
-            ];
+            foreach ($this->getFooterActions() as $key => $value) {
+                if ($value instanceof ActionGroup) {
+                    foreach ($value->getFlatActions() as $action) {
+                        $this->cachedActions[$action->getName()] = $this->prepareAction($action);
+                    }
+                } elseif (is_string($key)) {
+                    $this->cachedActions[$key] = $value;
+                }
+            }
         }
 
         if ($this instanceof HasHeaderActions) {
-            $this->cachedActions = [
-                ...$this->cachedActions,
-                ...$this->getHeaderActions(),
-            ];
+            foreach ($this->getHeaderActions() as $key => $value) {
+                if ($value instanceof ActionGroup) {
+                    foreach ($value->getFlatActions() as $action) {
+                        $this->cachedActions[$action->getName()] = $this->prepareAction($action);
+                    }
+                } elseif (is_string($key)) {
+                    $this->cachedActions[$key] = $value;
+                }
+            }
         }
 
         if ($this instanceof HasHintActions) {
@@ -146,7 +157,7 @@ trait HasActions
         return $this->cachedActions;
     }
 
-    public function prepareAction(Action $action): Action
+    public function prepareAction(Action | ActionGroup $action): Action | ActionGroup
     {
         return $action->component($this);
     }

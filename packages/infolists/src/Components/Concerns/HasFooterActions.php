@@ -4,6 +4,7 @@ namespace Filament\Infolists\Components\Concerns;
 
 use Closure;
 use Filament\Infolists\Components\Actions\Action;
+use Filament\Infolists\Components\Actions\ActionGroup;
 use Filament\Support\Concerns\HasFooterActionsAlignment;
 use Illuminate\Support\Arr;
 
@@ -12,17 +13,17 @@ trait HasFooterActions
     use HasFooterActionsAlignment;
 
     /**
-     * @var array<Action> | null
+     * @var array<Action | ActionGroup> | null
      */
     protected ?array $cachedFooterActions = null;
 
     /**
-     * @var array<Action | Closure>
+     * @var array<Action | ActionGroup | Closure>
      */
     protected array $footerActions = [];
 
     /**
-     * @param  array<Action | Closure>  $actions
+     * @param  array<Action | ActionGroup | Closure>  $actions
      */
     public function footerActions(array $actions): static
     {
@@ -35,7 +36,7 @@ trait HasFooterActions
     }
 
     /**
-     * @return array<Action>
+     * @return array<Action | ActionGroup>
      */
     public function getFooterActions(): array
     {
@@ -43,7 +44,7 @@ trait HasFooterActions
     }
 
     /**
-     * @return array<Action>
+     * @return array<Action | ActionGroup>
      */
     public function cacheFooterActions(): array
     {
@@ -51,7 +52,17 @@ trait HasFooterActions
 
         foreach ($this->footerActions as $footerAction) {
             foreach (Arr::wrap($this->evaluate($footerAction)) as $action) {
-                $this->cachedFooterActions[$action->getName()] = $this->prepareAction($action);
+                if ($action instanceof Action) {
+                    $this->cachedFooterActions[$action->getName()] = $this->prepareAction($action);
+                }
+
+                if ($action instanceof ActionGroup) {
+                    $this->cachedFooterActions[] = $this->prepareAction($action);
+
+                    foreach ($action->getFlatActions() as $action) {
+                        $this->prepareAction($action);
+                    }
+                }
             }
         }
 

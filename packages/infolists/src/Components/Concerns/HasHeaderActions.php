@@ -4,22 +4,23 @@ namespace Filament\Infolists\Components\Concerns;
 
 use Closure;
 use Filament\Infolists\Components\Actions\Action;
+use Filament\Infolists\Components\Actions\ActionGroup;
 use Illuminate\Support\Arr;
 
 trait HasHeaderActions
 {
     /**
-     * @var array<Action> | null
+     * @var array<Action | ActionGroup> | null
      */
     protected ?array $cachedHeaderActions = null;
 
     /**
-     * @var array<Action | Closure>
+     * @var array<Action | ActionGroup | Closure>
      */
     protected array $headerActions = [];
 
     /**
-     * @param  array<Action | Closure>  $actions
+     * @param  array<Action | ActionGroup | Closure>  $actions
      */
     public function headerActions(array $actions): static
     {
@@ -32,7 +33,7 @@ trait HasHeaderActions
     }
 
     /**
-     * @return array<Action>
+     * @return array<Action | ActionGroup>
      */
     public function getHeaderActions(): array
     {
@@ -40,7 +41,7 @@ trait HasHeaderActions
     }
 
     /**
-     * @return array<Action>
+     * @return array<Action | ActionGroup>
      */
     public function cacheHeaderActions(): array
     {
@@ -48,7 +49,17 @@ trait HasHeaderActions
 
         foreach ($this->headerActions as $headerAction) {
             foreach (Arr::wrap($this->evaluate($headerAction)) as $action) {
-                $this->cachedHeaderActions[$action->getName()] = $this->prepareAction($action);
+                if ($action instanceof Action) {
+                    $this->cachedHeaderActions[$action->getName()] = $this->prepareAction($action);
+                }
+
+                if ($action instanceof ActionGroup) {
+                    $this->cachedHeaderActions[] = $this->prepareAction($action);
+
+                    foreach ($action->getFlatActions() as $action) {
+                        $this->prepareAction($action);
+                    }
+                }
             }
         }
 

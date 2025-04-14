@@ -4,6 +4,7 @@ namespace Filament\Infolists\Components;
 
 use Closure;
 use Filament\Infolists\Components\Actions\Action;
+use Filament\Infolists\Components\Actions\ActionGroup;
 use Filament\Support\Concerns\HasAlignment;
 use Filament\Support\Concerns\HasVerticalAlignment;
 
@@ -17,7 +18,7 @@ class Actions extends Component
     protected bool | Closure $isFullWidth = false;
 
     /**
-     * @param  array<Action>  $actions
+     * @param  array<Action | ActionGroup>  $actions
      */
     final public function __construct(array $actions)
     {
@@ -25,7 +26,7 @@ class Actions extends Component
     }
 
     /**
-     * @param  array<Action>  $actions
+     * @param  array<Action | ActionGroup>  $actions
      */
     public static function make(array $actions): static
     {
@@ -36,12 +37,12 @@ class Actions extends Component
     }
 
     /**
-     * @param  array<Action>  $actions
+     * @param  array<Action | ActionGroup>  $actions
      */
     public function actions(array $actions): static
     {
         $this->childComponents(array_map(
-            fn (Action $action): Component => $action->toInfolistComponent(),
+            fn (Action | ActionGroup $action): Component => $action->toInfolistComponent(),
             $actions,
         ));
 
